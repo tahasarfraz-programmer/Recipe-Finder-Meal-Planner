@@ -1,0 +1,37 @@
+{% load recipe_extras %}
+<article class="recipe-card">
+  <div class="thumb">
+    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" loading="lazy">
+    <form class="fav-form" method="post" action="{% url 'recipes:favorite_toggle' recipe.slug %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      {% if recipe.id in fav_ids %}
+      <button class="fav-btn active" type="submit" aria-label="Remove {{ recipe.title }} from favorites" title="Remove from favorites"><i class="bi bi-heart-fill"></i></button>
+      {% else %}
+      <button class="fav-btn" type="submit" aria-label="Save {{ recipe.title }} to favorites" title="Save to favorites"><i class="bi bi-heart"></i></button>
+      {% endif %}
+    </form>
+  </div>
+  <div class="body">
+    <div class="d-flex flex-wrap gap-1 mb-2">
+      <span class="pill">{{ recipe.category.name }}</span>
+      <span class="pill pill-orange">{{ recipe.cuisine.name }}</span>
+      <span class="pill pill-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
+    </div>
+    <h3 class="card-title h5 mb-2"><a href="{{ recipe.get_absolute_url }}">{{ recipe.title }}</a></h3>
+    <div class="mb-2">
+      {% if recipe.review_count %}
+        {% stars recipe.avg_rating %} <span class="visually-hidden">{{ recipe.avg_rating|floatformat:1 }} out of 5,</span>
+        <span class="rating-count">{{ recipe.avg_rating|floatformat:1 }} ({{ recipe.review_count }})</span>
+      {% else %}
+        <span class="rating-count">No ratings yet</span>
+      {% endif %}
+    </div>
+    <div class="meta-row">
+      <span title="Prep time"><i class="bi bi-scissors"></i> {{ recipe.prep_time }} min prep</span>
+      <span title="Cook time"><i class="bi bi-fire"></i> {{ recipe.cook_time }} min cook</span>
+      <span title="Total time"><i class="bi bi-clock"></i> {{ recipe.total_minutes }} min total</span>
+      {% if recipe.calories %}<span title="Calories per serving"><i class="bi bi-lightning-charge"></i> {{ recipe.calories }} kcal</span>{% endif %}
+    </div>
+  </div>
+</article>

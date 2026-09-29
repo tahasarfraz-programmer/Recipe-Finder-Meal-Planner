@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load recipe_extras %}
+{% block title %}Meal Planner | Recipe Finder{% endblock %}
+{% block content %}
+{% comment %}One reusable slot renderer is inlined twice: table (desktop) and agenda (mobile).{% endcomment %}
+<section class="bg-cream py-4 border-bottom"><div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div><h1 class="h2 mb-0">Meal Planner</h1>
+    <p class="text-muted mb-0">{{ week_start|date:"M j" }} to {{ week_end|date:"M j, Y" }} &middot; {{ planned_count }} meal{{ planned_count|pluralize }} planned</p></div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-accent" href="{% url 'planner:generate' %}"><i class="bi bi-magic"></i> Generate meal plan</a>
+    <form method="post" action="{% url 'shopping:generate' %}">{% csrf_token %}
+      <input type="hidden" name="start" value="{{ week_start|date:'Y-m-d' }}"><input type="hidden" name="end" value="{{ week_end|date:'Y-m-d' }}">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-cart-plus"></i> Shopping list for this week</button></form>
+  </div>
+</div></section>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a class="btn btn-outline-primary" href="?week={{ prev_week }}"><i class="bi bi-chevron-left"></i> Previous</a>
+    <a class="btn btn-link" href="?week={{ this_week }}">This week</a>
+    <a class="btn btn-outline-primary" href="?week={{ next_week }}">Next <i class="bi bi-chevron-right"></i></a>
+  </div>
+
+  {# Desktop: weekly grid #}
+  <div class="table-responsive d-none d-lg-block">
+    <table class="planner-table w-100">
+      <caption class="visually-hidden">Weekly meal plan</caption>
+      <thead><tr><th scope="col"></th>
+        {% for d in days %}<th scope="col" class="{% if d == today %}today{% endif %}">{{ d|date:"D" }}<div class="small fw-normal text-muted">{{ d|date:"M j" }}</div></th>{% endfor %}
+      </tr></thead>
+      <tbody>
+      {% for row in rows %}
+        <tr><th scope="row" class="slot-label">{{ row.label }}</th>
+        {% for cell in row.cells %}
+          <td>
+          {% with plan=cell.plan %}
+            {% if plan %}
+            <div class="slot {% if plan.is_cooked %}cooked{% endif %}">
+              <a class="title" href="{{ plan.recipe.get_absolute_url }}">{{ plan.recipe.title }}</a>
+              <div class="text-muted small">{{ plan.recipe.total_time }} min{% if plan.recipe.calories %} &middot; {{ plan.recipe.calories }} kcal{% endif %}</div>
+              <div class="actions">
+                <a class="btn btn-outline-primary" href="{% url 'planner:add' %}?date={{ cell.date|date:'Y-m-d' }}&amp;meal_type={{ row.meal_type }}" title="Replace" aria-label="Replace {{ plan.recipe.title }}"><i class="bi bi-arrow-repeat"></i></a>
+                <form method="post" action="{% url 'planner:regenerate' plan.pk %}">{% csrf_token %}<button class="btn btn-outline-secondary" title="Suggest another" aria-label="Suggest another recipe"><i class="bi bi-shuffle"></i></button></form>
+                <form method="post" action="{% url 'planner:cooked' plan.pk %}">{% csrf_token %}<button class="btn {% if plan.is_cooked %}btn-success{% else %}btn-outline-success{% endif %}" title="Toggle cooked" aria-label="Toggle cooked"><i class="bi bi-check2"></i></button></form>
+                <form method="post" action="{% url 'planner:remove' plan.pk %}" data-confirm="Remove this meal?">{% csrf_token %}<button class="btn btn-outline-danger" title="Remove" aria-label="Remove {{ plan.recipe.title }}"><i class="bi bi-trash"></i></button></form>
+              </div>
+            </div>
+            {% else %}
+            <a class="slot empty text-decoration-none text-muted" href="{% url 'planner:add' %}?date={{ cell.date|date:'Y-m-d' }}&amp;meal_type={{ row.meal_type }}"><span><i class="bi bi-plus-lg"></i> Add<span class="visually-hidden"> {{ row.label }} on {{ cell.date|date:"l" }}</span></span></a>
+            {% endif %}
+          {% endwith %}
+          </td>
+        {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Mobile / tablet: day-by-day agenda #}
+  <div class="d-lg-none">
+    {% for day in agenda %}
+    <section class="filter-card agenda-day p-3 mb-3 {% if day.is_today %}today{% endif %}" aria-label="{{ day.date|date:'l, F j' }}">
+      <h2 class="h5 {% if day.is_today %}text-orange{% endif %}">{{ day.date|date:"l" }} <span class="text-muted fs-6 fw-normal">{{ day.date|date:"M j" }}</span></h2>
+      {% for slot in day.slots %}
+        <div class="py-2 {% if not forloop.last %}border-bottom{% endif %}">
+          <div class="small fw-bold text-muted">{{ slot.label }}</div>
+          {% if slot.plan %}
+            <a class="fw-bold text-decoration-none" href="{{ slot.plan.recipe.get_absolute_url }}">{{ slot.plan.recipe.title }}</a>
+            <div class="slot-actions d-flex gap-1 mt-1 flex-wrap">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'planner:add' %}?date={{ day.date|date:'Y-m-d' }}&amp;meal_type={{ slot.meal_type }}"><i class="bi bi-arrow-repeat"></i> Replace</a>
+              <form method="post" action="{% url 'planner:regenerate' slot.plan.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary"><i class="bi bi-shuffle"></i> Another</button></form>
+              <form method="post" action="{% url 'planner:cooked' slot.plan.pk %}">{% csrf_token %}<button class="btn btn-sm {% if slot.plan.is_cooked %}btn-success{% else %}btn-outline-success{% endif %}"><i class="bi bi-check2"></i> Cooked</button></form>
+              <form method="post" action="{% url 'planner:remove' slot.plan.pk %}" data-confirm="Remove this meal?">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Remove</button></form>
+            </div>
+          {% else %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'planner:add' %}?date={{ day.date|date:'Y-m-d' }}&amp;meal_type={{ slot.meal_type }}"><i class="bi bi-plus"></i> Add a recipe</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

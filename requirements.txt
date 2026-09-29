@@ -1,0 +1,4 @@
+Django>=5.1,<6.0
+Pillow>=10.0
+# Optional, only needed when DB_ENGINE=postgres:
+# psycopg[binary]>=3.1

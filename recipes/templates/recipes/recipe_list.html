@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{% if is_search and q %}Search: {{ q }}{% elif is_search %}Search recipes{% else %}Browse recipes{% endif %} | Recipe Finder{% endblock %}
+{% block meta_description %}Browse and filter recipes by category, cuisine, diet, difficulty and cooking time.{% endblock %}
+{% block content %}
+<section class="bg-cream py-4 border-bottom">
+  <div class="container">
+    <h1 class="h2 mb-1">{% if is_search %}{% if q %}Results for “{{ q }}”{% else %}Search recipes{% endif %}{% else %}Browse recipes{% endif %}</h1>
+    <p class="text-muted mb-0">Combine filters to narrow things down. Try “vegetarian dinner” or “quick breakfast”.</p>
+  </div>
+</section>
+{% include "recipes/_listing.html" %}
+{% endblock %}

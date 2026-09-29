@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Shopping List | Recipe Finder{% endblock %}
+{% block content %}
+<section class="bg-cream py-4 border-bottom"><div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div><h1 class="h2 mb-0">Shopping List</h1>
+    <p class="text-muted mb-0">{{ total }} item{{ total|pluralize }}{% if total %} &middot; {{ purchased }} purchased{% endif %}</p></div>
+  <div class="d-flex flex-wrap gap-2 no-print">
+    <form method="post" action="{% url 'shopping:generate' %}">{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="bi bi-calendar-check"></i> Generate from this week's plan</button></form>
+    <button class="btn btn-outline-primary" type="button" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+  </div>
+</div></section>
+<div class="container py-4">
+  <form method="post" action="{% url 'shopping:add' %}" class="filter-card p-3 mb-4 no-print">
+    {% csrf_token %}
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4"><label class="form-label small mb-1" for="{{ form.name.id_for_label }}">Item</label>{{ form.name }}</div>
+      <div class="col-4 col-md-2"><label class="form-label small mb-1" for="{{ form.quantity.id_for_label }}">Quantity</label>{{ form.quantity }}</div>
+      <div class="col-4 col-md-2"><label class="form-label small mb-1" for="{{ form.unit.id_for_label }}">Unit</label>{{ form.unit }}</div>
+      <div class="col-4 col-md-2"><label class="form-label small mb-1" for="{{ form.category.id_for_label }}">Group</label>{{ form.category }}</div>
+      <div class="col-12 col-md-2 d-grid"><button class="btn btn-accent" type="submit"><i class="bi bi-plus-lg"></i> Add item</button></div>
+    </div>
+  </form>
+
+  {% if groups %}
+  <div class="row g-4">
+    {% for group in groups %}
+    <div class="col-md-6"><section class="filter-card p-3 h-100" aria-label="{{ group.label }}">
+      <h2 class="h5">{{ group.label }}</h2>
+      {% for item in group.items %}
+      <div class="shop-item {% if item.is_purchased %}done{% endif %}">
+        <form method="post" action="{% url 'shopping:toggle' item.pk %}">{% csrf_token %}
+          <button class="toggle" type="submit" aria-label="{% if item.is_purchased %}Mark {{ item.name }} as not purchased{% else %}Mark {{ item.name }} as purchased{% endif %}">
+            <i class="bi {% if item.is_purchased %}bi-check-square-fill{% else %}bi-square{% endif %}"></i></button></form>
+        <span class="name">{{ item.name }}{% if item.display_quantity %} <span class="text-muted small">({{ item.display_quantity }})</span>{% endif %}</span>
+        <a class="btn btn-sm btn-outline-secondary no-print" href="{% url 'shopping:edit' item.pk %}" aria-label="Edit {{ item.name }}"><i class="bi bi-pencil"></i></a>
+        <form method="post" action="{% url 'shopping:delete' item.pk %}" class="no-print">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" aria-label="Remove {{ item.name }}"><i class="bi bi-x-lg"></i></button></form>
+      </div>
+      {% endfor %}
+    </section></div>
+    {% endfor %}
+  </div>
+  <div class="d-flex flex-wrap gap-2 mt-4 no-print">
+    <form method="post" action="{% url 'shopping:clear_purchased' %}">{% csrf_token %}<button class="btn btn-outline-primary" type="submit" {% if not purchased %}disabled{% endif %}><i class="bi bi-check2-all"></i> Clear purchased</button></form>
+    <form method="post" action="{% url 'shopping:clear_all' %}" data-confirm="Clear your entire shopping list?">{% csrf_token %}<button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash"></i> Clear entire list</button></form>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="bi bi-cart3 display-4 text-muted"></i>
+    <h2 class="h4 mt-3">Your list is empty</h2>
+    <p class="text-muted">Add an item above, or plan some meals and generate the list from them.</p>
+    <a class="btn btn-primary" href="{% url 'planner:week' %}">Open the meal planner</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

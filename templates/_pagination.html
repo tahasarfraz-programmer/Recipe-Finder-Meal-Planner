@@ -1,0 +1,22 @@
+{% load recipe_extras %}
+{% if page_obj.has_other_pages %}
+<nav aria-label="Pagination" class="mt-4">
+  <ul class="pagination justify-content-center flex-wrap">
+    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+      {% if page_obj.has_previous %}<a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}">Previous</a>
+      {% else %}<span class="page-link">Previous</span>{% endif %}
+    </li>
+    {% for n in page_obj.paginator.page_range %}
+      {% if n == page_obj.number %}
+        <li class="page-item active" aria-current="page"><span class="page-link">{{ n }}</span></li>
+      {% elif n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+        <li class="page-item"><a class="page-link" href="?{% url_replace page=n %}">{{ n }}</a></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+      {% if page_obj.has_next %}<a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}">Next</a>
+      {% else %}<span class="page-link">Next</span>{% endif %}
+    </li>
+  </ul>
+</nav>
+{% endif %}

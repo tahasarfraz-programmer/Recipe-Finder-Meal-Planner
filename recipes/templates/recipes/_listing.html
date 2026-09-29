@@ -1,0 +1,27 @@
+{# Shared by the recipe list, search and favorites pages. #}
+<div class="container section pt-4">
+  <div class="row g-4">
+    <aside class="col-lg-3">
+      <button class="btn btn-outline-primary w-100 d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#filters" aria-expanded="false" aria-controls="filters">
+        <i class="bi bi-funnel"></i> Filters{% if active_filter_count %} ({{ active_filter_count }}){% endif %}
+      </button>
+      <div class="collapse d-lg-block" id="filters">{% include "recipes/_filter_sidebar.html" %}</div>
+    </aside>
+    <div class="col-lg-9">
+      <p class="text-muted" aria-live="polite">{{ page_obj.paginator.count }} recipe{{ page_obj.paginator.count|pluralize }} found</p>
+      {% if page_obj %}
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
+        {% for recipe in page_obj %}<div class="col">{% include "recipes/_recipe_card.html" %}</div>{% endfor %}
+      </div>
+      {% include "_pagination.html" %}
+      {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-search display-4 text-muted"></i>
+        <h2 class="h4 mt-3">No recipes match those filters</h2>
+        <p class="text-muted">Try removing a filter or searching for something broader, like an ingredient.</p>
+        <a class="btn btn-primary" href="{{ request.path }}">Clear filters</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

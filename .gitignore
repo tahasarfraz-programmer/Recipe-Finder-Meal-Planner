@@ -1,0 +1,15 @@
+.env
+db.sqlite3
+__pycache__/
+*.pyc
+venv/
+.venv/
+media/*
+!media/recipes/
+media/recipes/*
+!media/recipes/.gitkeep
+staticfiles/
+.idea/
+.vscode/
+*.log
+.DS_Store

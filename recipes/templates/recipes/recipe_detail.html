@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load recipe_extras %}
+{% block title %}{{ recipe.title }} | Recipe Finder{% endblock %}
+{% block meta_description %}{{ recipe.description|truncatechars:155 }}{% endblock %}
+{% block og_title %}{{ recipe.title }}{% endblock %}
+{% block og_description %}{{ recipe.description|truncatechars:155 }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_extra %}<meta property="og:image" content="{{ og_image }}">{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <nav aria-label="Breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'recipes:list' %}">Recipes</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ recipe.title }}</li>
+  </ol></nav>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6"><img class="recipe-hero-img" src="{{ recipe.image_url }}" alt="{{ recipe.title }}"></div>
+    <div class="col-lg-6">
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        <a class="pill text-decoration-none" href="{% url 'recipes:list' %}?category={{ recipe.category.slug }}">{{ recipe.category.name }}</a>
+        <a class="pill pill-orange text-decoration-none" href="{% url 'recipes:list' %}?cuisine={{ recipe.cuisine.slug }}">{{ recipe.cuisine.name }}</a>
+        <span class="pill pill-{{ recipe.difficulty }}">{{ recipe.get_difficulty_display }}</span>
+        {% for d in recipe.diets.all %}<a class="pill text-decoration-none" href="{% url 'recipes:list' %}?diet={{ d.slug }}">{{ d.name }}</a>{% endfor %}
+      </div>
+      <h1 class="display-6 fw-bold">{{ recipe.title }}</h1>
+      <div class="mb-3">
+        {% if recipe.review_count %}
+          {% stars recipe.avg_rating %} <strong>{{ recipe.avg_rating|floatformat:1 }}</strong>
+          <a href="#reviews" class="rating-count">({{ recipe.review_count }} review{{ recipe.review_count|pluralize }})</a>
+        {% else %}<a href="#reviews" class="rating-count">No reviews yet. Be the first!</a>{% endif %}
+      </div>
+      <p class="lead fs-6">{{ recipe.description }}</p>
+      <div class="row g-2 mb-3 text-center">
+        <div class="col-6 col-md-3"><div class="fact"><div class="value">{{ recipe.prep_time }}m</div><div class="label">Prep</div></div></div>
+        <div class="col-6 col-md-3"><div class="fact"><div class="value">{{ recipe.cook_time }}m</div><div class="label">Cook</div></div></div>
+        <div class="col-6 col-md-3"><div class="fact"><div class="value">{{ recipe.total_time }}m</div><div class="label">Total</div></div></div>
+        <div class="col-6 col-md-3"><div class="fact"><div class="value">{{ recipe.servings }}</div><div class="label">Servings</div></div></div>
+      </div>
+      {% if recipe.calories %}<p class="text-muted"><i class="bi bi-lightning-charge"></i> {{ recipe.calories }} kcal per serving</p>{% endif %}
+
+      <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{% url 'recipes:favorite_toggle' recipe.slug %}">
+          {% csrf_token %}
+          {% if is_favorite %}<button class="btn btn-outline-danger" type="submit"><i class="bi bi-heart-fill"></i> Remove from favorites</button>
+          {% else %}<button class="btn btn-outline-primary" type="submit"><i class="bi bi-heart"></i> Save to favorites</button>{% endif %}
+        </form>
+        <button class="btn btn-accent" type="button" data-bs-toggle="collapse" data-bs-target="#addToPlan" aria-expanded="false" aria-controls="addToPlan">
+          <i class="bi bi-calendar-plus"></i> Add to meal plan
+        </button>
+      </div>
+      <div class="collapse mt-3" id="addToPlan">
+        <form class="filter-card p-3" method="get" action="{% url 'planner:add' %}">
+          <input type="hidden" name="recipe" value="{{ recipe.slug }}">
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-5"><label class="form-label" for="plan-date">Date</label>
+              <input class="form-control" type="date" id="plan-date" name="date" value="{% now 'Y-m-d' %}" required></div>
+            <div class="col-sm-4"><label class="form-label" for="plan-meal">Meal</label>
+              <select class="form-select" id="plan-meal" name="meal_type">
+                {% for value, label in meal_types %}<option value="{{ value }}" {% if value == 'dinner' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select></div>
+            <div class="col-sm-3 d-grid"><button class="btn btn-primary" type="submit">Continue</button></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h4 mb-0">Ingredients</h2>
+        <form method="get" class="d-flex align-items-center gap-2">
+          <label for="servings" class="small text-muted mb-0">Servings</label>
+          <input id="servings" class="form-control form-control-sm" style="width:72px" type="number" name="servings" min="1" max="48" value="{{ servings }}">
+          <button class="btn btn-sm btn-outline-primary" type="submit">Scale</button>
+        </form>
+      </div>
+      <ul class="ingredient-list">
+        {% for item in ingredients %}<li><i class="bi bi-check2-circle" aria-hidden="true"></i><span>{{ item.display }}</span></li>
+        {% empty %}<li class="text-muted">Ingredients haven't been added yet.</li>{% endfor %}
+      </ul>
+
+      <h2 class="h4 mt-4">Nutrition <span class="fs-6 text-muted fw-normal">per serving</span></h2>
+      {% if recipe.has_nutrition %}
+      <div class="nutrition-grid">
+        <div class="fact"><div class="value">{{ recipe.calories|default_if_none:"n/a" }}</div><div class="label">Calories</div></div>
+        <div class="fact"><div class="value">{% if recipe.protein is not None %}{{ recipe.protein|floatformat:"-1" }}g{% else %}n/a{% endif %}</div><div class="label">Protein</div></div>
+        <div class="fact"><div class="value">{% if recipe.carbohydrates is not None %}{{ recipe.carbohydrates|floatformat:"-1" }}g{% else %}n/a{% endif %}</div><div class="label">Carbs</div></div>
+        <div class="fact"><div class="value">{% if recipe.fat is not None %}{{ recipe.fat|floatformat:"-1" }}g{% else %}n/a{% endif %}</div><div class="label">Fat</div></div>
+        <div class="fact"><div class="value">{% if recipe.fiber is not None %}{{ recipe.fiber|floatformat:"-1" }}g{% else %}n/a{% endif %}</div><div class="label">Fiber</div></div>
+      </div>
+      <p class="small text-muted mt-2 mb-0">Approximate values. Sample data for demonstration, not dietary or medical advice.</p>
+      {% else %}
+      <p class="text-muted">Nutrition information isn't available for this recipe.</p>
+      {% endif %}
+    </div>
+    <div class="col-lg-7">
+      <h2 class="h4">Instructions</h2>
+      <ol class="step-list">
+        {% for step in instructions %}<li><span>{{ step.instruction }}</span></li>
+        {% empty %}<li class="text-muted">Instructions haven't been added yet.</li>{% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <hr class="my-5">
+  <section id="reviews" aria-labelledby="reviews-heading">
+    <h2 class="h4" id="reviews-heading">Ratings &amp; reviews</h2>
+    <div class="row g-4">
+      <div class="col-lg-5">
+        {% if user.is_authenticated %}
+        <div class="filter-card p-3">
+          <h3 class="h6">{% if user_review %}Edit your review{% else %}Rate this recipe{% endif %}</h3>
+          <form method="post" action="{% url 'recipes:review_save' recipe.slug %}">
+            {% csrf_token %}
+            <fieldset class="mb-2">
+              <legend class="visually-hidden">Your rating</legend>
+              <div class="star-input" role="radiogroup" aria-label="Your rating">
+                {% for n in "54321" %}
+                <input type="radio" id="star{{ n }}" name="rating" value="{{ n }}" required {% if user_review.rating|stringformat:"s" == n %}checked{% endif %}>
+                <label for="star{{ n }}" title="{{ n }} star{{ n|pluralize }}"><i class="bi bi-star-fill"></i><span class="visually-hidden">{{ n }} star{{ n|pluralize }}</span></label>
+                {% endfor %}
+              </div>
+            </fieldset>
+            <label class="form-label small" for="id_comment">Review (optional)</label>
+            <textarea class="form-control mb-2" id="id_comment" name="comment" rows="3" maxlength="2000" placeholder="What did you think?">{{ user_review.comment }}</textarea>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" type="submit">{% if user_review %}Update review{% else %}Submit review{% endif %}</button>
+            </div>
+          </form>
+          {% if user_review %}
+          <form class="mt-2" method="post" action="{% url 'recipes:review_delete' recipe.slug %}" data-confirm="Delete your review?">
+            {% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i> Delete my review</button>
+          </form>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="filter-card p-3"><p class="mb-2">Sign in to rate and review this recipe.</p>
+          <a class="btn btn-primary" href="{% url 'accounts:login' %}?next={{ request.path }}">Log in</a></div>
+        {% endif %}
+      </div>
+      <div class="col-lg-7">
+        {% for review in reviews %}
+        <article class="review">
+          <div class="d-flex justify-content-between">
+            <strong>{{ review.user.username }}</strong>
+            <time class="small text-muted" datetime="{{ review.created_at|date:'Y-m-d' }}">{{ review.created_at|date:"M j, Y" }}</time>
+          </div>
+          <div>{% stars review.rating %}<span class="visually-hidden">{{ review.rating }} out of 5</span></div>
+          {% if review.comment %}<p class="mb-0 mt-1">{{ review.comment|linebreaksbr }}</p>{% endif %}
+        </article>
+        {% empty %}
+        <p class="text-muted">No reviews yet. Cooked this? Tell others how it went.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if related %}
+  <section class="mt-5" aria-labelledby="related-heading">
+    <h2 class="h4 mb-3" id="related-heading">More {{ recipe.category.name|lower }} recipes</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+      {% for recipe in related %}<div class="col">{% include "recipes/_recipe_card.html" %}</div>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

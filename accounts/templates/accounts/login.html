@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Log in | Recipe Finder{% endblock %}
+{% block content %}
+<div class="container"><div class="auth-card">
+  <h1 class="h3 mb-1">Welcome back</h1>
+  <p class="text-muted">Log in to see your meal plan, favorites and shopping list.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% include "accounts/_form_fields.html" %}
+    <button class="btn btn-primary w-100" type="submit">Log in</button>
+  </form>
+  <div class="d-flex justify-content-between mt-3 small">
+    <a href="{% url 'accounts:password_reset' %}">Forgot your password?</a>
+    <a href="{% url 'accounts:register' %}">Create an account</a>
+  </div>
+</div></div>
+{% endblock %}

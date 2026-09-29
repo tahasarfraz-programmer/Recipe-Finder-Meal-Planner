@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Edit item | Recipe Finder{% endblock %}
+{% block content %}
+<div class="container section pt-4" style="max-width:560px">
+  <h1 class="h3">Edit item</h1>
+  <form method="post" class="filter-card p-4" novalidate>
+    {% csrf_token %}
+    {% include "accounts/_form_fields.html" %}
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Save changes</button>
+      <a class="btn btn-outline-secondary" href="{% url 'shopping:list' %}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

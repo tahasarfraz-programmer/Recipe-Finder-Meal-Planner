@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Generate meal plan | Recipe Finder{% endblock %}
+{% block content %}
+<div class="container section pt-4" style="max-width:760px">
+  <h1 class="h3">Generate a meal plan</h1>
+  <p class="text-muted">We'll fill your planner from the recipes in the library that match your preferences. You can swap any single meal afterwards.</p>
+  <form method="post" class="filter-card p-4" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}
+      <div class="{% if field.name == 'replace_existing' %}col-12{% else %}col-md-6{% endif %}">
+        {% if field.name == 'replace_existing' %}
+          <div class="form-check">{{ field }} <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+        {% else %}
+          <label class="form-label fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+        {% endif %}
+        {% for error in field.errors %}<div class="text-danger small" role="alert">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <button class="btn btn-accent mt-4" type="submit"><i class="bi bi-magic"></i> Generate meal plan</button>
+  </form>
+</div>
+{% endblock %}

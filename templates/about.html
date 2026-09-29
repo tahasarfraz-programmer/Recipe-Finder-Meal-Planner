@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}About | Recipe Finder{% endblock %}
+{% block meta_description %}About Recipe Finder & Meal Planner, a Django app for discovering recipes and planning meals.{% endblock %}
+{% block content %}
+<section class="bg-cream py-5 border-bottom"><div class="container"><h1 class="display-6 fw-bold mb-1">About Recipe Finder</h1>
+<p class="text-muted mb-0">Cook more of what you love, with less planning effort.</p></div></section>
+<div class="container section">
+  <div class="row g-5">
+    <div class="col-lg-7">
+      <h2 class="h4">What it does</h2>
+      <p>Recipe Finder & Meal Planner helps you find recipes, save favorites, plan a week of meals and turn that plan into a shopping list. Search works across recipe names, ingredients, cuisines, categories and diets, and filters can be combined.</p>
+      <h2 class="h4 mt-4">Built with</h2>
+      <p>Python and Django on the back end, with Bootstrap 5 on the front end. The project uses Django's own authentication, forms, admin and ORM, and works with SQLite for development or PostgreSQL for production.</p>
+      <h2 class="h4 mt-4">A note on the sample data</h2>
+      <p>The bundled recipes and nutrition values are demo content created for this project. Nutrition numbers are rough estimates and should not be used for medical or dietary decisions.</p>
+    </div>
+    <div class="col-lg-5">
+      <div class="feature-panel orange">
+        <h2 class="h5">Get started</h2>
+        <ul class="list-unstyled mb-3">
+          <li class="mb-2"><a href="{% url 'recipes:list' %}"><i class="bi bi-search"></i> Browse recipes</a></li>
+          <li class="mb-2"><a href="{% url 'planner:week' %}"><i class="bi bi-calendar-week"></i> Plan your week</a></li>
+          <li><a href="{% url 'shopping:list' %}"><i class="bi bi-cart3"></i> Build a shopping list</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
